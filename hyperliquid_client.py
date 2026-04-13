@@ -155,12 +155,9 @@ class HyperliquidClient:
 
             spot_val = self.get_spot_balance(addr)
 
-            total = perp_val + spot_val
-            log(f"Account value: Perp=${perp_val:.2f} + Spot=${spot_val:.2f} = ${total:.2f}")
-
-            if perp_val == 0 and spot_val > 0:
-                log(f"WARNING: Funds are in SPOT wallet, not PERP. "
-                    f"Transfer USDC from Spot to Perp on Hyperliquid to trade futures!")
+            total = max(perp_val, spot_val, perp_val + spot_val)
+            log(f"Account value: Perp=${perp_val:.2f} | Spot=${spot_val:.2f} | "
+                f"Using=${total:.2f} (unified account)")
 
             return total
         except Exception as e:
