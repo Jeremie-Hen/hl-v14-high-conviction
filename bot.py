@@ -107,10 +107,24 @@ def open_new_position(hl: HyperliquidClient, tracker: PerformanceTracker, signal
             tracker.save()
             return False
 
+        fill_price = HyperliquidClient.extract_fill_price(result)
+        if fill_price is not None:
+            log(f"  [POS] Fill price: ${fill_price:,.2f} (mid was ${mid_price:,.0f})")
+            tracker.open_trade["entry_price"] = fill_price
+            sl_pct = signal["sl_pct"]
+            if is_long:
+                tracker.open_trade["sl_price"] = fill_price * (1 - sl_pct / 100)
+            else:
+                tracker.open_trade["sl_price"] = fill_price * (1 + sl_pct / 100)
+
         time.sleep(0.5)
 
         sl_price = tracker.open_trade["sl_price"]
-        hl.place_sl_order(config.SYMBOL, size_btc, is_long, sl_price)
+        sl_result = hl.place_sl_order(config.SYMBOL, size_btc, is_long, sl_price)
+        sl_oid = sl_result.get("sl_oid")
+        tracker.open_trade["sl_oid"] = sl_oid
+        log(f"  [POS] SL placed: oid={sl_oid} @ ${sl_price:,.0f}")
+        tracker.save()
 
         return True
     except Exception as e:
@@ -120,17 +134,31 @@ def open_new_position(hl: HyperliquidClient, tracker: PerformanceTracker, signal
 
 
 def close_existing_position(hl: HyperliquidClient, tracker: PerformanceTracker, reason: str) -> bool:
-    """Close the current open position."""
+    """Close the current open position. Cancels SL by OID then market-closes."""
     if not tracker.has_open_position:
         return False
 
     log(f"  [POS] Closing position: {reason}")
 
+    sl_oid = tracker.open_trade.get("sl_oid") if tracker.open_trade else None
+    if sl_oid and not config.DRY_RUN:
+        try:
+            hl.cancel_orders(config.SYMBOL, [sl_oid])
+            log(f"  [POS] Cancelled SL oid={sl_oid}")
+        except Exception as e:
+            log(f"  [POS] Error cancelling SL: {e}")
+
     mid_price = hl.get_mid_price(config.SYMBOL)
 
     if not config.DRY_RUN:
         try:
-            hl.close_position(config.SYMBOL)
+            positions = hl.get_open_positions()
+            for pos in positions:
+                if pos["symbol"] == config.SYMBOL:
+                    is_buy = pos["size"] < 0
+                    hl.place_market_order(config.SYMBOL, is_buy, abs(pos["size"]),
+                                          reduce_only=True)
+                    break
         except Exception as e:
             log(f"  [POS] Error closing on HL: {e}")
 
@@ -160,24 +188,58 @@ def manage_position_between_hours(hl: HyperliquidClient, tracker: PerformanceTra
 
     if trade.get("trail_active") and new_sl and old_sl and new_sl != old_sl:
         is_long = trade["direction"] == "LONG"
+        old_sl_oid = trade.get("sl_oid")
         if not config.DRY_RUN:
             try:
-                hl.update_trailing_stop(config.SYMBOL, trade["size_btc"], is_long, new_sl)
-                log(f"  [TRAIL] Updated SL: ${old_sl:,.0f} -> ${new_sl:,.0f}")
+                sl_result = hl.update_trailing_stop(
+                    config.SYMBOL, trade["size_btc"], is_long, new_sl,
+                    old_sl_oid=old_sl_oid,
+                )
+                new_oid = sl_result.get("sl_oid")
+                trade["sl_oid"] = new_oid
+                tracker.save()
+                log(f"  [TRAIL] Updated SL: ${old_sl:,.0f} -> ${new_sl:,.0f} (oid={new_oid})")
             except Exception as e:
                 log(f"  [TRAIL] Error updating: {e}")
         else:
             log(f"  [TRAIL] DRY RUN SL update: ${old_sl:,.0f} -> ${new_sl:,.0f}")
 
     if not config.DRY_RUN:
+        reconcile_position_with_exchange(hl, tracker, mid_price)
+
+
+def reconcile_position_with_exchange(hl: HyperliquidClient, tracker: PerformanceTracker, mid_price: float):
+    """
+    OID-based reconciliation: check if the SL oid is still alive.
+    If it's gone, the SL was triggered on-chain — close the tracker.
+    Also verify exchange position still exists as a safety check.
+    """
+    if not tracker.has_open_position:
+        return
+
+    trade = tracker.open_trade
+    sl_oid = trade.get("sl_oid")
+
+    if sl_oid:
         try:
-            positions = hl.get_open_positions()
-            has_pos = any(p["symbol"] == config.SYMBOL for p in positions)
-            if not has_pos and tracker.has_open_position:
-                log("  [POS] Position closed on-chain (SL hit or liquidation)")
+            open_orders = hl.get_open_orders()
+            live_oids = {int(o["oid"]) for o in open_orders if "oid" in o}
+
+            if int(sl_oid) not in live_oids:
+                log(f"  [RECONCILE] SL oid={sl_oid} no longer alive — SL was triggered")
                 tracker.close_position(mid_price, "sl_triggered")
+                return
         except Exception:
             pass
+
+    try:
+        positions = hl.get_open_positions()
+        has_pos = any(p["symbol"] == config.SYMBOL for p in positions)
+        if not has_pos and tracker.has_open_position:
+            log("  [RECONCILE] No exchange position found — closed externally")
+            tracker.close_position(mid_price, "external_close")
+    except Exception:
+        pass
 
 
 def check_position_expiry(hl: HyperliquidClient, tracker: PerformanceTracker) -> bool:
@@ -272,6 +334,30 @@ def main():
 
     log(f"  Equity: ${tracker.current_equity:.2f}")
     log(f"  Open position: {'YES' if tracker.has_open_position else 'NO'}")
+
+    # Startup reconciliation: verify position still exists on exchange
+    if config.LIVE_TRADING and not config.DRY_RUN and tracker.has_open_position:
+        log("  [STARTUP] Reconciling with exchange...")
+        try:
+            mid = hl.get_mid_price(config.SYMBOL)
+            reconcile_position_with_exchange(hl, tracker, mid)
+        except Exception as e:
+            log(f"  [STARTUP] Reconciliation error: {e}")
+
+    # Cleanup orphaned trigger orders from previous runs
+    if config.LIVE_TRADING and not config.DRY_RUN:
+        log("  [STARTUP] Checking for orphaned orders...")
+        tracked_oids = set()
+        if tracker.has_open_position and tracker.open_trade:
+            sl_oid = tracker.open_trade.get("sl_oid")
+            if sl_oid:
+                tracked_oids.add(int(sl_oid))
+        orphans = hl.cleanup_orphaned_orders(config.SYMBOL, tracked_oids)
+        if orphans:
+            log(f"  [STARTUP] Cleaned {orphans} orphaned orders")
+        else:
+            log("  [STARTUP] No orphaned orders")
+
     log("")
     log("Bot started. Entering hourly loop...")
     log("")
@@ -386,20 +472,9 @@ def main():
                 elif signal and check_signal_reversal(hl, tracker, signal):
                     open_new_position(hl, tracker, signal, tracker.current_equity)
 
-                # 3. Update trailing stop
+                # 3. Update trailing stop + reconcile
                 else:
                     manage_position_between_hours(hl, tracker)
-
-                    if not config.DRY_RUN:
-                        try:
-                            positions = hl.get_open_positions()
-                            has_pos = any(p["symbol"] == config.SYMBOL for p in positions)
-                            if not has_pos and tracker.has_open_position:
-                                mid = hl.get_mid_price(config.SYMBOL)
-                                tracker.close_position(mid, "sl_triggered")
-                                log("  Position was closed by trigger order")
-                        except Exception:
-                            pass
 
             # ── Open new position if no position ──────────────────
             if not tracker.has_open_position and signal:
