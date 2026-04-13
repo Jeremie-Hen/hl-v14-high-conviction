@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.pyc
+trade_log.json
+bot_state.json
+agent_history.json
+models/*.pkl
+*.pkl
+.DS_Store
