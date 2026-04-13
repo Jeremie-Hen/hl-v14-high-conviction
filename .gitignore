@@ -4,6 +4,6 @@ __pycache__/
 trade_log.json
 bot_state.json
 agent_history.json
+signal_state.json
 models/*.pkl
-*.pkl
 .DS_Store

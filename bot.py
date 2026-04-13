@@ -442,11 +442,19 @@ def main():
                 f"TA: {ta_result['ta_long']}L/{ta_result['ta_short']}S "
                 f"(net={ta_result['ta_net_signal']:+.3f})")
 
-            # ── Retrain ML model daily ────────────────────────────
-            if now.hour == config.MODEL_RETRAIN_HOUR and ml_model.model is not None:
-                log("  Skipping retrain (model exists, daily retrain handled on first boot)")
-            elif ml_model.model is None:
-                log("  [ML] No model loaded — will trade without ML component until retrain")
+            # ── ML model status ────────────────────────────────────
+            if ml_model.model is not None:
+                age = ""
+                if ml_model.last_train_ts:
+                    try:
+                        trained_dt = datetime.fromisoformat(ml_model.last_train_ts)
+                        age_h = (now - trained_dt).total_seconds() / 3600
+                        age = f", trained {age_h:.0f}h ago"
+                    except Exception:
+                        pass
+                log(f"  [ML] Model loaded ({len(ml_model.feature_cols)} features{age})")
+            else:
+                log("  [ML] No model loaded — trading without ML component")
 
             # ── Compute signal ────────────────────────────────────
             tracker.signals_generated += 1

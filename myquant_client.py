@@ -246,8 +246,10 @@ class AgentHistoryTracker:
         local_acc_count = 0
         api_acc_count = 0
 
+        import re
         for agent in agents:
-            safe_name = agent["name"].replace(" ", "_").replace("-", "_")
+            safe_name = re.sub(r'[^a-zA-Z0-9]', '_', agent["name"])
+            safe_name = re.sub(r'_+', '_', safe_name).strip('_')
             features[f"agent_{safe_name}_dir"] = agent["direction"]
 
             # Use local rolling accuracy if available (more recent / granular)
@@ -256,7 +258,6 @@ class AgentHistoryTracker:
                 features[f"agent_{safe_name}_acc_{config.ACC_WINDOW}h"] = acc
                 local_acc_count += 1
             elif agent.get("api_accuracy") is not None and agent.get("total_predictions", 0) >= 20:
-                # Fallback: use historical accuracy from myquant API stats
                 features[f"agent_{safe_name}_acc_{config.ACC_WINDOW}h"] = agent["api_accuracy"]
                 api_acc_count += 1
 
