@@ -125,15 +125,44 @@ class HyperliquidClient:
                 })
         return positions
 
+    def get_spot_balance(self, address: str = None) -> float:
+        """Get USDC balance in spot wallet."""
+        addr = address or self.wallet_address
+        payload = {"type": "spotClearinghouseState", "user": addr}
+        try:
+            resp = self.session.post(f"{self.api_url}/info", json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            for bal in data.get("balances", []):
+                if bal.get("coin") == "USDC":
+                    return float(bal.get("total", 0))
+        except Exception as e:
+            log(f"Error getting spot balance: {e}")
+        return 0.0
+
     def get_account_value(self, address: str = None) -> float:
         try:
             addr = address or self.wallet_address
+
             perp_state = self.get_account_state(addr)
             margin = perp_state.get("marginSummary", {})
             cross = perp_state.get("crossMarginSummary", {})
-            perp_val = float(margin.get("accountValue", 0)) or float(cross.get("accountValue", 0)) or float(perp_state.get("withdrawable", 0))
-            log(f"Account value: ${perp_val:.2f}")
-            return perp_val
+            perp_val = (
+                float(margin.get("accountValue", 0))
+                or float(cross.get("accountValue", 0))
+                or float(perp_state.get("withdrawable", 0))
+            )
+
+            spot_val = self.get_spot_balance(addr)
+
+            total = perp_val + spot_val
+            log(f"Account value: Perp=${perp_val:.2f} + Spot=${spot_val:.2f} = ${total:.2f}")
+
+            if perp_val == 0 and spot_val > 0:
+                log(f"WARNING: Funds are in SPOT wallet, not PERP. "
+                    f"Transfer USDC from Spot to Perp on Hyperliquid to trade futures!")
+
+            return total
         except Exception as e:
             log(f"Error getting account value: {e}")
             return 0.0
