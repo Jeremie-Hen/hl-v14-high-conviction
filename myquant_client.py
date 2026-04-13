@@ -65,6 +65,11 @@ def _parse_agent(raw: dict) -> dict | None:
     reasoning_hash = hashlib.md5(reasoning.encode()).hexdigest()[:8] if reasoning else "none"
     fingerprint = f"{raw_dir}|{confidence}|{reasoning_hash}"
 
+    # Extract historical accuracy from API stats (available immediately)
+    stats = raw.get("stats") or {}
+    api_accuracy = stats.get("accuracy")  # e.g. 50.81 (percentage)
+    total_preds = stats.get("totalPredictions", 0)
+
     return {
         "name": name.strip(),
         "direction": direction,
@@ -72,6 +77,8 @@ def _parse_agent(raw: dict) -> dict | None:
         "confidence": confidence,
         "is_correct": is_correct,
         "fingerprint": fingerprint,
+        "api_accuracy": api_accuracy / 100.0 if api_accuracy is not None else None,
+        "total_predictions": total_preds,
     }
 
 
@@ -94,11 +101,23 @@ def build_fingerprint(agents: list[dict]) -> str:
 def poll_for_fresh_predictions(last_fingerprint: str | None = None) -> tuple[list[dict] | None, dict]:
     """
     Poll myquant.gg until predictions change (new fingerprint).
+    Agents typically generate ~71s past the hour, so we wait and check
+    for both fingerprint changes and 'generating' state (empty direction).
     Returns (parsed_agents, poll_stats) or (None, poll_stats) on timeout.
     """
-    stats = {"polls": 0, "errors": 0, "stale": 0, "elapsed_sec": 0}
+    stats = {"polls": 0, "errors": 0, "stale": 0, "generating": 0, "elapsed_sec": 0}
     start = time.time()
     deadline = start + config.POLL_WINDOW_SEC
+
+    # If no last fingerprint (first boot), grab a snapshot first so we can detect changes
+    if last_fingerprint is None:
+        log("  [POLL] No previous fingerprint — capturing baseline snapshot...")
+        raw = fetch_predictions()
+        if raw:
+            baseline = parse_all_agents(raw)
+            if baseline:
+                last_fingerprint = build_fingerprint(baseline)
+                log(f"  [POLL] Baseline: {len(baseline)} agents, waiting for new predictions...")
 
     while time.time() < deadline:
         stats["polls"] += 1
@@ -106,6 +125,32 @@ def poll_for_fresh_predictions(last_fingerprint: str | None = None) -> tuple[lis
 
         if raw is None:
             stats["errors"] += 1
+            time.sleep(config.POLL_INTERVAL_SEC)
+            continue
+
+        if len(raw) == 0:
+            stats["errors"] += 1
+            time.sleep(config.POLL_INTERVAL_SEC)
+            continue
+
+        # Check if agents are still generating (direction is empty/null)
+        generating_count = 0
+        for p in raw:
+            lp = p.get("latestPrediction") or {}
+            d = lp.get("direction") or p.get("direction") or ""
+            if not d or str(d).strip().upper() not in _DIRECTION_MAP:
+                generating_count += 1
+
+        if generating_count > len(raw) * 0.3:
+            stats["generating"] += 1
+            if stats["generating"] == 1:
+                deadline = max(deadline, time.time() + 120)
+                log(f"  [POLL] Agents generating ({generating_count}/{len(raw)} without direction) "
+                    f"— extending deadline")
+            elif stats["generating"] % 12 == 0:
+                remaining = deadline - time.time()
+                log(f"  [POLL] Still generating... "
+                    f"({stats['generating']} checks, {remaining:.0f}s remaining)")
             time.sleep(config.POLL_INTERVAL_SEC)
             continue
 
@@ -126,11 +171,13 @@ def poll_for_fresh_predictions(last_fingerprint: str | None = None) -> tuple[lis
         elapsed = time.time() - start
         stats["elapsed_sec"] = round(elapsed, 1)
         log(f"  [POLL] Fresh predictions: {len(agents)} agents in {elapsed:.1f}s "
-            f"({stats['polls']} polls, {stats['errors']} errors)")
+            f"({stats['polls']} polls, {stats['errors']} errors, "
+            f"{stats['generating']} generating)")
         return agents, stats
 
     stats["elapsed_sec"] = round(time.time() - start, 1)
-    log(f"  [POLL] Timeout after {stats['elapsed_sec']}s ({stats['polls']} polls)")
+    log(f"  [POLL] Timeout after {stats['elapsed_sec']}s ({stats['polls']} polls, "
+        f"{stats['generating']} generating)")
     return None, stats
 
 
@@ -193,13 +240,27 @@ class AgentHistoryTracker:
         """
         Build feature dict for the current hour:
           agent_{name}_dir: +1/-1
-          agent_{name}_acc_72h: rolling accuracy
+          agent_{name}_acc_72h: rolling accuracy (local history, or API stats fallback)
         """
         features = {}
+        local_acc_count = 0
+        api_acc_count = 0
+
         for agent in agents:
             safe_name = agent["name"].replace(" ", "_").replace("-", "_")
             features[f"agent_{safe_name}_dir"] = agent["direction"]
+
+            # Use local rolling accuracy if available (more recent / granular)
             acc = self.get_rolling_accuracy(agent["name"])
             if acc is not None:
                 features[f"agent_{safe_name}_acc_{config.ACC_WINDOW}h"] = acc
+                local_acc_count += 1
+            elif agent.get("api_accuracy") is not None and agent.get("total_predictions", 0) >= 20:
+                # Fallback: use historical accuracy from myquant API stats
+                features[f"agent_{safe_name}_acc_{config.ACC_WINDOW}h"] = agent["api_accuracy"]
+                api_acc_count += 1
+
+        if api_acc_count > 0:
+            log(f"  [HIST] Accuracy sources: {local_acc_count} local, {api_acc_count} from API stats")
+
         return features
