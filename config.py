@@ -64,3 +64,4 @@ MYQUANT_API_URL = os.getenv(
 POLL_INTERVAL_SEC = int(os.getenv("POLL_INTERVAL_SEC", "5"))
 POLL_WINDOW_SEC = int(os.getenv("POLL_WINDOW_SEC", "600"))
 POSITION_POLL_SEC = 60  # check position / trailing stop between hours
+MIN_AGENTS_READY = int(os.getenv("MIN_AGENTS_READY", "100"))

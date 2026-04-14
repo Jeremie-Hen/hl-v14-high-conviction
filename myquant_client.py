@@ -188,27 +188,23 @@ def poll_for_fresh_predictions(last_fingerprint: str | None = None) -> tuple[lis
             time.sleep(config.POLL_INTERVAL_SEC)
             continue
 
-        generating_count = 0
-        for p in raw:
-            lp = p.get("latestPrediction") or {}
-            d = lp.get("direction") or p.get("direction") or ""
-            if not d or str(d).strip().upper() not in _DIRECTION_MAP:
-                generating_count += 1
+        agents = parse_all_agents(raw)
+        ready_count = len(agents)
+        not_ready_count = len(raw) - ready_count
 
-        if generating_count > len(raw) * 0.3:
+        if ready_count < config.MIN_AGENTS_READY:
             stats["generating"] += 1
             if stats["generating"] == 1:
                 deadline = max(deadline, time.time() + 120)
-                log(f"  [POLL] Agents generating ({generating_count}/{len(raw)} without direction) "
-                    f"— extending deadline")
+                log(f"  [POLL] Waiting for agents: {ready_count}/{len(raw)} ready "
+                    f"(need >={config.MIN_AGENTS_READY}) — extending deadline")
             elif stats["generating"] % 12 == 0:
                 remaining = deadline - time.time()
-                log(f"  [POLL] Still generating... "
+                log(f"  [POLL] Still waiting: {ready_count}/{len(raw)} ready "
                     f"({stats['generating']} checks, {remaining:.0f}s remaining)")
             time.sleep(config.POLL_INTERVAL_SEC)
             continue
 
-        agents = parse_all_agents(raw)
         if not agents:
             stats["errors"] += 1
             time.sleep(config.POLL_INTERVAL_SEC)
@@ -236,7 +232,7 @@ def poll_for_fresh_predictions(last_fingerprint: str | None = None) -> tuple[lis
 
         elapsed = time.time() - start
         stats["elapsed_sec"] = round(elapsed, 1)
-        log(f"  [POLL] Fresh predictions: {len(agents)} agents in {elapsed:.1f}s "
+        log(f"  [POLL] Fresh predictions: {len(agents)}/{len(raw)} agents ready in {elapsed:.1f}s "
             f"({stats['polls']} polls, {stats['errors']} errors, "
             f"{stats['generating']} generating, "
             f"{changed}/{checked} sentinels verified)")
