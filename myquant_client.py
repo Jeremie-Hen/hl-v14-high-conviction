@@ -60,14 +60,14 @@ def _parse_agent(raw: dict) -> dict | None:
     direction = _DIRECTION_MAP.get(raw_dir, 0)
 
     confidence = lp.get("confidence") or raw.get("confidence") or 0
+    predicted_price = lp.get("predictedPrice") or lp.get("predicted_price")
     is_correct = lp.get("isCorrect")
     reasoning = lp.get("reasoning", "")
     reasoning_hash = hashlib.md5(reasoning.encode()).hexdigest()[:8] if reasoning else "none"
-    fingerprint = f"{raw_dir}|{confidence}|{reasoning_hash}"
+    fingerprint = f"{raw_dir}|{confidence}|{predicted_price}|{reasoning_hash}"
 
-    # Extract historical accuracy from API stats (available immediately)
     stats = raw.get("stats") or {}
-    api_accuracy = stats.get("accuracy")  # e.g. 50.81 (percentage)
+    api_accuracy = stats.get("accuracy")
     total_preds = stats.get("totalPredictions", 0)
 
     return {
@@ -75,8 +75,10 @@ def _parse_agent(raw: dict) -> dict | None:
         "direction": direction,
         "raw_direction": raw_dir,
         "confidence": confidence,
+        "predicted_price": predicted_price,
         "is_correct": is_correct,
         "fingerprint": fingerprint,
+        "reasoning_snippet": reasoning[:80] if reasoning else "",
         "api_accuracy": api_accuracy / 100.0 if api_accuracy is not None else None,
         "total_predictions": total_preds,
     }
@@ -98,26 +100,79 @@ def build_fingerprint(agents: list[dict]) -> str:
     return hashlib.md5("|".join(fps).encode()).hexdigest()
 
 
+def _pick_sentinel_agents(agents: list[dict], n: int = 3) -> dict[str, dict]:
+    """Pick N agents with the longest reasoning as sentinels for content verification."""
+    ranked = sorted(agents, key=lambda a: len(a.get("reasoning_snippet", "")), reverse=True)
+    return {a["name"]: a for a in ranked[:n]}
+
+
+def _verify_content_changed(baseline_sentinels: dict, new_agents: list[dict]) -> tuple[int, int]:
+    """Compare sentinel agents' content (reasoning + price) to verify genuine change.
+    Returns (changed_count, checked_count)."""
+    new_by_name = {a["name"]: a for a in new_agents}
+    changed = 0
+    checked = 0
+    for name, old in baseline_sentinels.items():
+        new = new_by_name.get(name)
+        if not new:
+            continue
+        checked += 1
+        old_fp = old["fingerprint"]
+        new_fp = new["fingerprint"]
+        if old_fp != new_fp:
+            changed += 1
+            log(f"  [VERIFY] {name}: CHANGED "
+                f"(dir {old['raw_direction']}->{new['raw_direction']}, "
+                f"price {old.get('predicted_price')}->{new.get('predicted_price')}, "
+                f"reasoning {'changed' if old.get('reasoning_snippet','')[:40] != new.get('reasoning_snippet','')[:40] else 'same prefix'})")
+        else:
+            log(f"  [VERIFY] {name}: unchanged")
+    return changed, checked
+
+
 def poll_for_fresh_predictions(last_fingerprint: str | None = None) -> tuple[list[dict] | None, dict]:
     """
-    Poll myquant.gg until predictions change (new fingerprint).
-    Agents typically generate ~71s past the hour, so we wait and check
-    for both fingerprint changes and 'generating' state (empty direction).
+    Poll myquant.gg until predictions genuinely change for the new hour.
+
+    Key design: ALWAYS captures a fresh baseline at the start of each poll cycle
+    (what the API looks like RIGHT NOW before agents regenerate). Then waits for
+    the combined fingerprint to differ from this baseline. This prevents false
+    positives from cross-hour drift in the stored last_fingerprint.
+
+    Agents typically generate ~71s past the hour.
+
     Returns (parsed_agents, poll_stats) or (None, poll_stats) on timeout.
     """
-    stats = {"polls": 0, "errors": 0, "stale": 0, "generating": 0, "elapsed_sec": 0}
+    stats = {"polls": 0, "errors": 0, "stale": 0, "generating": 0,
+             "elapsed_sec": 0, "sentinel_changed": 0, "sentinel_checked": 0}
     start = time.time()
     deadline = start + config.POLL_WINDOW_SEC
 
-    # If no last fingerprint (first boot), grab a snapshot first so we can detect changes
-    if last_fingerprint is None:
-        log("  [POLL] No previous fingerprint — capturing baseline snapshot...")
+    # ALWAYS capture a fresh baseline — this is what the API looks like RIGHT NOW
+    # (pre-generation state). We'll wait for it to change from THIS, not from
+    # the stored last_fingerprint which may have drifted.
+    baseline_fp = None
+    baseline_sentinels = {}
+    log("  [POLL] Capturing pre-generation baseline...")
+    for attempt in range(3):
         raw = fetch_predictions()
-        if raw:
-            baseline = parse_all_agents(raw)
-            if baseline:
-                last_fingerprint = build_fingerprint(baseline)
-                log(f"  [POLL] Baseline: {len(baseline)} agents, waiting for new predictions...")
+        if raw and len(raw) > 0:
+            baseline_agents = parse_all_agents(raw)
+            if baseline_agents:
+                baseline_fp = build_fingerprint(baseline_agents)
+                baseline_sentinels = _pick_sentinel_agents(baseline_agents)
+                sentinel_names = list(baseline_sentinels.keys())
+                log(f"  [POLL] Baseline: {len(baseline_agents)} agents, fp={baseline_fp[:12]}...")
+                log(f"  [POLL] Sentinel agents: {sentinel_names}")
+                for sn, sv in baseline_sentinels.items():
+                    log(f"    {sn}: dir={sv['raw_direction']} price={sv.get('predicted_price')} "
+                        f"reason={sv.get('reasoning_snippet', '')[:50]}...")
+                break
+        time.sleep(2)
+
+    if baseline_fp is None:
+        log("  [POLL] WARNING: Could not capture baseline, falling back to stored fingerprint")
+        baseline_fp = last_fingerprint
 
     while time.time() < deadline:
         stats["polls"] += 1
@@ -133,7 +188,6 @@ def poll_for_fresh_predictions(last_fingerprint: str | None = None) -> tuple[lis
             time.sleep(config.POLL_INTERVAL_SEC)
             continue
 
-        # Check if agents are still generating (direction is empty/null)
         generating_count = 0
         for p in raw:
             lp = p.get("latestPrediction") or {}
@@ -161,10 +215,22 @@ def poll_for_fresh_predictions(last_fingerprint: str | None = None) -> tuple[lis
             continue
 
         fp = build_fingerprint(agents)
-        if last_fingerprint and fp == last_fingerprint:
+        if baseline_fp and fp == baseline_fp:
             stats["stale"] += 1
             if stats["stale"] <= 3 or stats["stale"] % 20 == 0:
                 log(f"  [POLL] Stale (attempt {stats['polls']}, {stats['stale']} stale)")
+            time.sleep(config.POLL_INTERVAL_SEC)
+            continue
+
+        # Fingerprint changed — verify with sentinel content comparison
+        changed, checked = _verify_content_changed(baseline_sentinels, agents)
+        stats["sentinel_changed"] = changed
+        stats["sentinel_checked"] = checked
+
+        if checked > 0 and changed == 0:
+            stats["stale"] += 1
+            log(f"  [POLL] Fingerprint changed but sentinel content unchanged "
+                f"(0/{checked} sentinels) — treating as stale, attempt {stats['polls']}")
             time.sleep(config.POLL_INTERVAL_SEC)
             continue
 
@@ -172,12 +238,13 @@ def poll_for_fresh_predictions(last_fingerprint: str | None = None) -> tuple[lis
         stats["elapsed_sec"] = round(elapsed, 1)
         log(f"  [POLL] Fresh predictions: {len(agents)} agents in {elapsed:.1f}s "
             f"({stats['polls']} polls, {stats['errors']} errors, "
-            f"{stats['generating']} generating)")
+            f"{stats['generating']} generating, "
+            f"{changed}/{checked} sentinels verified)")
         return agents, stats
 
     stats["elapsed_sec"] = round(time.time() - start, 1)
     log(f"  [POLL] Timeout after {stats['elapsed_sec']}s ({stats['polls']} polls, "
-        f"{stats['generating']} generating)")
+        f"{stats['generating']} generating, {stats['stale']} stale)")
     return None, stats
 
 
