@@ -5,5 +5,6 @@ trade_log.json
 bot_state.json
 agent_history.json
 signal_state.json
+feature_store.jsonl
 models/*.pkl
 .DS_Store

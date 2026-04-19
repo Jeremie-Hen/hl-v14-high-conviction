@@ -10,7 +10,7 @@ WALLET_ADDRESS = os.getenv("HL_WALLET_ADDRESS", "")
 
 # ── Trading parameters ───────────────────────────────────────────
 SYMBOL = os.getenv("SYMBOL", "BTC")
-LEVERAGE = int(os.getenv("LEVERAGE", "10"))
+LEVERAGE = int(os.getenv("LEVERAGE", "5"))
 POSITION_EQUITY_PCT = float(os.getenv("POSITION_EQUITY_PCT", "1.0"))
 MAX_POSITIONS = 1
 
@@ -32,13 +32,19 @@ SL_MIN_PCT = 0.2
 SL_MAX_PCT = 3.0
 
 # Agent analysis
-BAD_AGENT_THRESHOLD = 0.45
+BAD_AGENT_THRESHOLD = float(os.getenv("BAD_AGENT_THRESHOLD", "0.475"))
 ACC_WINDOW = 72
 MIN_BAD_AGENTS_FOR_SIGNAL = 2
+# Minimum predictions required in the historical dataset to trust an agent's
+# pre-computed accuracy (avoids flagging freshly-added agents with few samples).
+BAD_AGENT_MIN_HISTORY = int(os.getenv("BAD_AGENT_MIN_HISTORY", "200"))
 
 # ML
-MODEL_RETRAIN_HOUR = 0  # retrain daily at 00:00 UTC
+MODEL_RETRAIN_HOUR = int(os.getenv("MODEL_RETRAIN_HOUR", "2"))  # daily retrain UTC hour
 MIN_TRAIN_SAMPLES = 200
+# If True, the bot will spawn retrain.py itself once per day at MODEL_RETRAIN_HOUR.
+# If False, retraining is expected to be handled by a Railway cron service.
+ENABLE_INTERNAL_RETRAIN = os.getenv("ENABLE_INTERNAL_RETRAIN", "true").lower() == "true"
 
 # ── Fee structure (Hyperliquid base tier) ────────────────────────
 MAKER_FEE_PCT = 0.00015

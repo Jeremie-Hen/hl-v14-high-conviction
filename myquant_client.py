@@ -16,6 +16,20 @@ import requests
 import config
 
 AGENT_HISTORY_PATH = os.path.join(os.path.dirname(__file__), "agent_history.json")
+BAD_AGENTS_PATH = os.path.join(os.path.dirname(__file__), "bad_agents.json")
+
+
+def load_precomputed_agent_stats() -> dict:
+    """Load the 24h-horizon per-agent accuracy bundle produced by pretrain.py
+    / retrain.py. Returns {} if the file doesn't exist yet (bot will fall back
+    to API stats)."""
+    if not os.path.exists(BAD_AGENTS_PATH):
+        return {}
+    try:
+        with open(BAD_AGENTS_PATH, "r") as f:
+            return json.load(f)
+    except Exception:
+        return {}
 
 _DIRECTION_MAP = {
     "LONG": 1, "SHORT": -1,
@@ -254,6 +268,22 @@ class AgentHistoryTracker:
     def __init__(self):
         self.history: dict[str, list[dict]] = defaultdict(list)
         self._load()
+        self.precomputed_stats: dict = {}
+        self._load_precomputed()
+
+    def _load_precomputed(self):
+        """Load pre-computed 24h-horizon agent accuracies from bad_agents.json
+        (produced by pretrain.py / retrain.py on the full historical dataset).
+        This gives us a working counter-trade signal from hour 1 — no need to
+        wait for the bot to accumulate local history."""
+        bundle = load_precomputed_agent_stats()
+        stats = bundle.get("agents", {}) if isinstance(bundle, dict) else {}
+        if stats:
+            bad = bundle.get("bad_agents", [])
+            log(f"  [HIST] Loaded pre-computed 24h stats for {len(stats)} agents "
+                f"({len(bad)} flagged as bad @ threshold "
+                f"{bundle.get('threshold', config.BAD_AGENT_THRESHOLD)})")
+            self.precomputed_stats = stats
 
     def _load(self):
         if os.path.exists(AGENT_HISTORY_PATH):
@@ -303,10 +333,17 @@ class AgentHistoryTracker:
         """
         Build feature dict for the current hour:
           agent_{name}_dir: +1/-1
-          agent_{name}_acc_72h: rolling accuracy (local history, or API stats fallback)
+          agent_{name}_acc_72h: accuracy used for counter-trade / consensus
+
+        Priority order for the accuracy source (most specific wins):
+          1. Local rolling accuracy (built up from observed outcomes)
+          2. Pre-computed 24h-horizon lifetime accuracy (from CSV + Binance)
+             — this is what makes the counter-trade signal usable from day 1
+          3. myquant API-reported lifetime 1h accuracy (last-resort fallback)
         """
         features = {}
         local_acc_count = 0
+        precomputed_count = 0
         api_acc_count = 0
 
         import re
@@ -315,16 +352,25 @@ class AgentHistoryTracker:
             safe_name = re.sub(r'_+', '_', safe_name).strip('_')
             features[f"agent_{safe_name}_dir"] = agent["direction"]
 
-            # Use local rolling accuracy if available (more recent / granular)
             acc = self.get_rolling_accuracy(agent["name"])
             if acc is not None:
                 features[f"agent_{safe_name}_acc_{config.ACC_WINDOW}h"] = acc
                 local_acc_count += 1
-            elif agent.get("api_accuracy") is not None and agent.get("total_predictions", 0) >= 20:
+                continue
+
+            pre = self.precomputed_stats.get(agent["name"])
+            if (pre and pre.get("lifetime_acc_24h") is not None
+                    and pre.get("total_predictions", 0) >= config.BAD_AGENT_MIN_HISTORY):
+                features[f"agent_{safe_name}_acc_{config.ACC_WINDOW}h"] = pre["lifetime_acc_24h"]
+                precomputed_count += 1
+                continue
+
+            if agent.get("api_accuracy") is not None and agent.get("total_predictions", 0) >= 20:
                 features[f"agent_{safe_name}_acc_{config.ACC_WINDOW}h"] = agent["api_accuracy"]
                 api_acc_count += 1
 
-        if api_acc_count > 0:
-            log(f"  [HIST] Accuracy sources: {local_acc_count} local, {api_acc_count} from API stats")
+        if local_acc_count + precomputed_count + api_acc_count > 0:
+            log(f"  [HIST] Accuracy sources: {local_acc_count} local, "
+                f"{precomputed_count} precomputed-24h, {api_acc_count} API-1h")
 
         return features

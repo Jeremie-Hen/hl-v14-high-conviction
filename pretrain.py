@@ -29,6 +29,7 @@ except ImportError:
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "model_v14.pkl")
 HOUR_STATE_PATH = os.path.join(os.path.dirname(__file__), "signal_state.json")
+BAD_AGENTS_PATH = os.path.join(os.path.dirname(__file__), "bad_agents.json")
 
 DIRECTION_MAP = {
     "LONG": 1, "SHORT": -1,
@@ -310,6 +311,93 @@ def train_model(features_df: pd.DataFrame, target_col: str = "target_dir_24h"):
 
 
 # ═════════════════════════════════════════════════════════════════════
+# STEP 6b: Per-agent 24h-horizon accuracy (pre-seeded bad-agents list)
+# ═════════════════════════════════════════════════════════════════════
+
+def compute_agent_24h_accuracy(csv_path: str, candle_df: pd.DataFrame) -> dict:
+    """
+    For each agent compute:
+      - lifetime_acc_1h   : from CSV `isCorrect` (what myquant reports)
+      - lifetime_acc_24h  : computed here by joining agent's 1h prediction
+                            against the 24h forward direction from Binance candles
+      - total_predictions
+    Returns a dict that gets saved to bad_agents.json for the live bot to consume.
+
+    The bot will use `lifetime_acc_24h` as the primary accuracy source for
+    counter-trade / consensus weighting (the strategy holds for up to 24h,
+    so what matters is not the agent's own 1h hit-rate but their correlation
+    with 24h direction).
+    """
+    log("Computing per-agent 24h-horizon accuracy from CSV + candles...")
+    df = pd.read_csv(csv_path, usecols=[
+        "agentName", "runDate", "direction", "isCorrect"
+    ])
+    df["runDate"] = pd.to_datetime(df["runDate"], utc=True)
+    df["hour_key"] = df["runDate"].dt.floor("h")
+    df["dir_int"] = df["direction"].map(DIRECTION_MAP).fillna(0).astype(int)
+    df = df[df["dir_int"] != 0]
+
+    # 24h forward direction per hour from candles
+    candle_df = candle_df.copy()
+    candle_df["fwd_ret_24h"] = candle_df["close"].shift(-24) / candle_df["close"] - 1
+    candle_df["fwd_dir_24h"] = np.where(
+        candle_df["fwd_ret_24h"] > 0, 1,
+        np.where(candle_df["fwd_ret_24h"] < 0, -1, 0)
+    )
+    fwd_by_hour = candle_df["fwd_dir_24h"].to_dict()
+
+    df["fwd_dir_24h"] = df["hour_key"].map(fwd_by_hour)
+    eval_df = df.dropna(subset=["fwd_dir_24h"])
+    eval_df = eval_df[eval_df["fwd_dir_24h"] != 0]
+
+    result = {}
+    for name, grp in eval_df.groupby("agentName"):
+        n = len(grp)
+        if n < 20:
+            continue
+        acc_24h = float((grp["dir_int"] == grp["fwd_dir_24h"]).mean())
+
+        # 1h acc: from CSV's isCorrect column
+        correct_1h_raw = grp["isCorrect"].map({True: 1, False: 0, "true": 1, "false": 0})
+        correct_1h = pd.to_numeric(correct_1h_raw, errors="coerce").dropna()
+        acc_1h = float(correct_1h.mean()) if len(correct_1h) >= 20 else None
+
+        result[name] = {
+            "total_predictions": n,
+            "lifetime_acc_1h": acc_1h,
+            "lifetime_acc_24h": acc_24h,
+        }
+
+    # Classify into bad / neutral / good for reporting
+    bad = sorted(
+        [(n, d["lifetime_acc_24h"], d["total_predictions"])
+         for n, d in result.items()
+         if d["lifetime_acc_24h"] <= config.BAD_AGENT_THRESHOLD
+         and d["total_predictions"] >= config.BAD_AGENT_MIN_HISTORY],
+        key=lambda x: x[1]
+    )
+    log(f"  Agents with 24h accuracy data: {len(result)}")
+    log(f"  Bad agents (<={config.BAD_AGENT_THRESHOLD:.3f}, "
+        f">={config.BAD_AGENT_MIN_HISTORY} preds): {len(bad)}")
+    for n, a, c in bad[:20]:
+        log(f"    BAD  {n:40s}  acc24h={a:.3f}  n={c}")
+    if len(bad) > 20:
+        log(f"    ... and {len(bad) - 20} more")
+
+    # Also log top good agents for sanity
+    good = sorted(
+        [(n, d["lifetime_acc_24h"], d["total_predictions"])
+         for n, d in result.items()
+         if d["total_predictions"] >= config.BAD_AGENT_MIN_HISTORY],
+        key=lambda x: -x[1]
+    )[:10]
+    for n, a, c in good:
+        log(f"    GOOD {n:40s}  acc24h={a:.3f}  n={c}")
+
+    return result
+
+
+# ═════════════════════════════════════════════════════════════════════
 # STEP 7: Learn bad hours
 # ═════════════════════════════════════════════════════════════════════
 
@@ -407,10 +495,29 @@ def main():
     log(f"  Model saved: {MODEL_PATH}")
     log(f"  File size: {os.path.getsize(MODEL_PATH) / 1024:.0f} KB")
 
-    # 9. Learn bad hours
+    # 9. Compute per-agent 24h accuracy and save bad-agents list
+    import json
+    agent_stats = compute_agent_24h_accuracy(args.csv, candle_df)
+    bad_agents_list = sorted([
+        name for name, d in agent_stats.items()
+        if d["lifetime_acc_24h"] <= config.BAD_AGENT_THRESHOLD
+        and d["total_predictions"] >= config.BAD_AGENT_MIN_HISTORY
+    ])
+    with open(BAD_AGENTS_PATH, "w") as f:
+        json.dump({
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "threshold": config.BAD_AGENT_THRESHOLD,
+            "min_history": config.BAD_AGENT_MIN_HISTORY,
+            "horizon": "24h",
+            "agents": agent_stats,
+            "bad_agents": bad_agents_list,
+        }, f, indent=2)
+    log(f"  Bad-agents file saved: {BAD_AGENTS_PATH} "
+        f"({len(bad_agents_list)} bad / {len(agent_stats)} total)")
+
+    # 10. Learn bad hours
     bad_hours = learn_bad_hours(merged)
     if bad_hours:
-        import json
         with open(HOUR_STATE_PATH, "w") as f:
             json.dump({"bad_hours": sorted(bad_hours)}, f)
         log(f"  Bad hours saved: {HOUR_STATE_PATH}")

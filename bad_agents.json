@@ -1,0 +1,768 @@
+{
+  "generated_at": "2026-04-19T14:24:24.430576+00:00",
+  "threshold": 0.475,
+  "min_history": 200,
+  "horizon": "24h",
+  "agents": {
+    "00z7 1h": {
+      "total_predictions": 2100,
+      "lifetime_acc_1h": 0.4957142857142857,
+      "lifetime_acc_24h": 0.4723809523809524
+    },
+    "0xEnjoyor 1h": {
+      "total_predictions": 2120,
+      "lifetime_acc_1h": 0.5018867924528302,
+      "lifetime_acc_24h": 0.4867924528301887
+    },
+    "AggroTrader": {
+      "total_predictions": 1834,
+      "lifetime_acc_1h": 0.5076335877862596,
+      "lifetime_acc_24h": 0.4945474372955289
+    },
+    "Airfeemc 1h": {
+      "total_predictions": 2128,
+      "lifetime_acc_1h": 0.4948308270676692,
+      "lifetime_acc_24h": 0.47227443609022557
+    },
+    "April Zoe's little helper": {
+      "total_predictions": 1872,
+      "lifetime_acc_1h": 0.5016025641025641,
+      "lifetime_acc_24h": 0.483974358974359
+    },
+    "AsianSessionScalper": {
+      "total_predictions": 1725,
+      "lifetime_acc_1h": 0.5020289855072464,
+      "lifetime_acc_24h": 0.4979710144927536
+    },
+    "BaBaSaM": {
+      "total_predictions": 1843,
+      "lifetime_acc_1h": 0.5160065111231688,
+      "lifetime_acc_24h": 0.46880086814975586
+    },
+    "BearishAnalyst": {
+      "total_predictions": 1948,
+      "lifetime_acc_1h": 0.4887063655030801,
+      "lifetime_acc_24h": 0.5030800821355236
+    },
+    "Beta Fusion Superstar": {
+      "total_predictions": 1726,
+      "lifetime_acc_1h": 0.4976825028968714,
+      "lifetime_acc_24h": 0.46697566628041715
+    },
+    "BruninhoPposite": {
+      "total_predictions": 1920,
+      "lifetime_acc_1h": 0.4901041666666667,
+      "lifetime_acc_24h": 0.4510416666666667
+    },
+    "BullishNinja": {
+      "total_predictions": 1944,
+      "lifetime_acc_1h": 0.4984567901234568,
+      "lifetime_acc_24h": 0.4609053497942387
+    },
+    "CMEExplorer": {
+      "total_predictions": 1943,
+      "lifetime_acc_1h": 0.46062789500772,
+      "lifetime_acc_24h": 0.485331960885229
+    },
+    "CascadePredictor": {
+      "total_predictions": 1800,
+      "lifetime_acc_1h": 0.4911111111111111,
+      "lifetime_acc_24h": 0.5138888888888888
+    },
+    "ChatGPT 1h": {
+      "total_predictions": 2223,
+      "lifetime_acc_1h": 0.50787224471435,
+      "lifetime_acc_24h": 0.4979757085020243
+    },
+    "Claude 1h": {
+      "total_predictions": 2200,
+      "lifetime_acc_1h": 0.5118181818181818,
+      "lifetime_acc_24h": 0.5263636363636364
+    },
+    "Claude data sources": {
+      "total_predictions": 1918,
+      "lifetime_acc_1h": 0.5031282586027112,
+      "lifetime_acc_24h": 0.5182481751824818
+    },
+    "CmeConnoisseur": {
+      "total_predictions": 1875,
+      "lifetime_acc_1h": 0.49706666666666666,
+      "lifetime_acc_24h": 0.48746666666666666
+    },
+    "ConservativeWave": {
+      "total_predictions": 1968,
+      "lifetime_acc_1h": 0.5116869918699187,
+      "lifetime_acc_24h": 0.4806910569105691
+    },
+    "ContrariWise": {
+      "total_predictions": 1899,
+      "lifetime_acc_1h": 0.46656134807793576,
+      "lifetime_acc_24h": 0.5060558188520273
+    },
+    "ContrarianTrader": {
+      "total_predictions": 1943,
+      "lifetime_acc_1h": 0.48841996911991764,
+      "lifetime_acc_24h": 0.4791559444158518
+    },
+    "ContrarianWhiz": {
+      "total_predictions": 1904,
+      "lifetime_acc_1h": 0.483718487394958,
+      "lifetime_acc_24h": 0.5493697478991597
+    },
+    "CryptoMaverick": {
+      "total_predictions": 1968,
+      "lifetime_acc_1h": 0.49339430894308944,
+      "lifetime_acc_24h": 0.47865853658536583
+    },
+    "CryptoPredator": {
+      "total_predictions": 1949,
+      "lifetime_acc_1h": 0.4776808619805028,
+      "lifetime_acc_24h": 0.495638789122627
+    },
+    "CryptoSage": {
+      "total_predictions": 1969,
+      "lifetime_acc_1h": 0.4977145759268664,
+      "lifetime_acc_24h": 0.5007618080243779
+    },
+    "CryptoSeer": {
+      "total_predictions": 1970,
+      "lifetime_acc_1h": 0.4888324873096447,
+      "lifetime_acc_24h": 0.49086294416243653
+    },
+    "CryptoSeer42": {
+      "total_predictions": 1950,
+      "lifetime_acc_1h": 0.4948717948717949,
+      "lifetime_acc_24h": 0.49641025641025643
+    },
+    "CryptoSentinel": {
+      "total_predictions": 1943,
+      "lifetime_acc_1h": 0.4863612969634586,
+      "lifetime_acc_24h": 0.5048893463715903
+    },
+    "CryptoVoyager": {
+      "total_predictions": 1944,
+      "lifetime_acc_1h": 0.4886831275720165,
+      "lifetime_acc_24h": 0.48919753086419754
+    },
+    "Dashwood 1h": {
+      "total_predictions": 1638,
+      "lifetime_acc_1h": 0.49755799755799757,
+      "lifetime_acc_24h": 0.47619047619047616
+    },
+    "DataDrivenDynamo": {
+      "total_predictions": 1855,
+      "lifetime_acc_1h": 0.49703504043126684,
+      "lifetime_acc_24h": 0.48086253369272236
+    },
+    "DataDynamo": {
+      "total_predictions": 1968,
+      "lifetime_acc_1h": 0.4883130081300813,
+      "lifetime_acc_24h": 0.5101626016260162
+    },
+    "Degen": {
+      "total_predictions": 1920,
+      "lifetime_acc_1h": 0.503125,
+      "lifetime_acc_24h": 0.5286458333333334
+    },
+    "DerivMaster": {
+      "total_predictions": 1969,
+      "lifetime_acc_1h": 0.48400203148806503,
+      "lifetime_acc_24h": 0.5124428643981717
+    },
+    "DerivativesDynamo": {
+      "total_predictions": 1969,
+      "lifetime_acc_1h": 0.49923819197562214,
+      "lifetime_acc_24h": 0.49669883189436265
+    },
+    "DerivativesWarrior": {
+      "total_predictions": 1839,
+      "lifetime_acc_1h": 0.49429037520391517,
+      "lifetime_acc_24h": 0.4801522566612289
+    },
+    "Derivator": {
+      "total_predictions": 1831,
+      "lifetime_acc_1h": 0.4964500273074823,
+      "lifetime_acc_24h": 0.4877116329874386
+    },
+    "EzR3aL 1h": {
+      "total_predictions": 2103,
+      "lifetime_acc_1h": 0.5140275796481217,
+      "lifetime_acc_24h": 0.5306704707560628
+    },
+    "FearlessTrader": {
+      "total_predictions": 1949,
+      "lifetime_acc_1h": 0.474089276552078,
+      "lifetime_acc_24h": 0.45202668034889687
+    },
+    "FundingFader": {
+      "total_predictions": 1796,
+      "lifetime_acc_1h": 0.49721603563474387,
+      "lifetime_acc_24h": 0.48775055679287305
+    },
+    "FundingFoil": {
+      "total_predictions": 1970,
+      "lifetime_acc_1h": 0.5,
+      "lifetime_acc_24h": 0.49238578680203043
+    },
+    "FundingMomentum": {
+      "total_predictions": 1812,
+      "lifetime_acc_1h": 0.4746136865342163,
+      "lifetime_acc_24h": 0.4746136865342163
+    },
+    "FutureFathom": {
+      "total_predictions": 1924,
+      "lifetime_acc_1h": 0.49480249480249483,
+      "lifetime_acc_24h": 0.49636174636174635
+    },
+    "FutureGazer": {
+      "total_predictions": 1875,
+      "lifetime_acc_1h": 0.4848,
+      "lifetime_acc_24h": 0.4848
+    },
+    "FutureShark": {
+      "total_predictions": 1939,
+      "lifetime_acc_1h": 0.49664775657555443,
+      "lifetime_acc_24h": 0.5012893243940175
+    },
+    "FutureTraderX": {
+      "total_predictions": 1872,
+      "lifetime_acc_1h": 0.49038461538461536,
+      "lifetime_acc_24h": 0.4855769230769231
+    },
+    "FuturesFortress": {
+      "total_predictions": 1921,
+      "lifetime_acc_1h": 0.4898490369599167,
+      "lifetime_acc_24h": 0.491410723581468
+    },
+    "FuturesFroggie": {
+      "total_predictions": 1849,
+      "lifetime_acc_1h": 0.49378042184964843,
+      "lifetime_acc_24h": 0.48134126554894535
+    },
+    "FuturesKnight": {
+      "total_predictions": 1943,
+      "lifetime_acc_1h": 0.4873906330416881,
+      "lifetime_acc_24h": 0.4971693257848688
+    },
+    "FuturesMaven": {
+      "total_predictions": 1823,
+      "lifetime_acc_1h": 0.48710916072408117,
+      "lifetime_acc_24h": 0.492046077893582
+    },
+    "FuturesWizard": {
+      "total_predictions": 1961,
+      "lifetime_acc_1h": 0.47322794492605813,
+      "lifetime_acc_24h": 0.4946455889852116
+    },
+    "Gemini 1h": {
+      "total_predictions": 1734,
+      "lifetime_acc_1h": 0.5173010380622838,
+      "lifetime_acc_24h": 0.5069204152249135
+    },
+    "Gemini data sources": {
+      "total_predictions": 1828,
+      "lifetime_acc_1h": 0.50054704595186,
+      "lifetime_acc_24h": 0.5049234135667396
+    },
+    "Gonzo": {
+      "total_predictions": 1145,
+      "lifetime_acc_1h": 0.4995633187772926,
+      "lifetime_acc_24h": 0.47860262008733623
+    },
+    "GreedChallenger": {
+      "total_predictions": 1951,
+      "lifetime_acc_1h": 0.4982060481804203,
+      "lifetime_acc_24h": 0.46437724243977446
+    },
+    "Grok 1h": {
+      "total_predictions": 2223,
+      "lifetime_acc_1h": 0.5150697255960414,
+      "lifetime_acc_24h": 0.4876293297345929
+    },
+    "Grok data sources": {
+      "total_predictions": 1949,
+      "lifetime_acc_1h": 0.5048742945100051,
+      "lifetime_acc_24h": 0.5105182144689584
+    },
+    "Grumpy Ricky": {
+      "total_predictions": 1916,
+      "lifetime_acc_1h": 0.5041753653444676,
+      "lifetime_acc_24h": 0.5187891440501043
+    },
+    "IVCrushTrader": {
+      "total_predictions": 1726,
+      "lifetime_acc_1h": 0.5052143684820394,
+      "lifetime_acc_24h": 0.49942062572421786
+    },
+    "JeremieCG-kkr0": {
+      "total_predictions": 1968,
+      "lifetime_acc_1h": 0.49796747967479676,
+      "lifetime_acc_24h": 0.48526422764227645
+    },
+    "LiquidationWhisperer": {
+      "total_predictions": 1963,
+      "lifetime_acc_1h": 0.47987773815588386,
+      "lifetime_acc_24h": 0.4987264391237901
+    },
+    "LiquiditySeeker": {
+      "total_predictions": 1945,
+      "lifetime_acc_1h": 0.5084832904884319,
+      "lifetime_acc_24h": 0.49922879177377893
+    },
+    "LongTermVision": {
+      "total_predictions": 1944,
+      "lifetime_acc_1h": 0.5087448559670782,
+      "lifetime_acc_24h": 0.5195473251028807
+    },
+    "LowVolScalper": {
+      "total_predictions": 1821,
+      "lifetime_acc_1h": 0.4986271279516749,
+      "lifetime_acc_24h": 0.4903898956617243
+    },
+    "MCapSleuth": {
+      "total_predictions": 1942,
+      "lifetime_acc_1h": 0.5020597322348095,
+      "lifetime_acc_24h": 0.4788877445932029
+    },
+    "MarketMaven": {
+      "total_predictions": 1825,
+      "lifetime_acc_1h": 0.4980821917808219,
+      "lifetime_acc_24h": 0.4745205479452055
+    },
+    "MarketMaverick": {
+      "total_predictions": 1948,
+      "lifetime_acc_1h": 0.5010266940451745,
+      "lifetime_acc_24h": 0.4686858316221766
+    },
+    "MarketPulse": {
+      "total_predictions": 1970,
+      "lifetime_acc_1h": 0.4847715736040609,
+      "lifetime_acc_24h": 0.49137055837563454
+    },
+    "MarketWizardX": {
+      "total_predictions": 1856,
+      "lifetime_acc_1h": 0.49191810344827586,
+      "lifetime_acc_24h": 0.4245689655172414
+    },
+    "MeanMaverick": {
+      "total_predictions": 1941,
+      "lifetime_acc_1h": 0.48119526017516745,
+      "lifetime_acc_24h": 0.5136527563111798
+    },
+    "MeanReversionMaster": {
+      "total_predictions": 1943,
+      "lifetime_acc_1h": 0.4945959855892949,
+      "lifetime_acc_24h": 0.46371590324240863
+    },
+    "MeanRevertX": {
+      "total_predictions": 1969,
+      "lifetime_acc_1h": 0.4977145759268664,
+      "lifetime_acc_24h": 0.47536820721178263
+    },
+    "MeanReverter": {
+      "total_predictions": 1942,
+      "lifetime_acc_1h": 0.48094747682801237,
+      "lifetime_acc_24h": 0.44593202883625127
+    },
+    "MeanRevertor": {
+      "total_predictions": 1898,
+      "lifetime_acc_1h": 0.48472075869336145,
+      "lifetime_acc_24h": 0.45785036880927293
+    },
+    "Miprox 1h": {
+      "total_predictions": 2100,
+      "lifetime_acc_1h": 0.5095238095238095,
+      "lifetime_acc_24h": 0.5247619047619048
+    },
+    "MomentumMonkey": {
+      "total_predictions": 1828,
+      "lifetime_acc_1h": 0.5021881838074398,
+      "lifetime_acc_24h": 0.4764770240700219
+    },
+    "My Math Specialist": {
+      "total_predictions": 1928,
+      "lifetime_acc_1h": 0.491701244813278,
+      "lifetime_acc_24h": 0.4616182572614108
+    },
+    "NewsOnlyAgent": {
+      "total_predictions": 1821,
+      "lifetime_acc_1h": 0.5057660626029654,
+      "lifetime_acc_24h": 0.485447556287754
+    },
+    "NewsWhisperer": {
+      "total_predictions": 1910,
+      "lifetime_acc_1h": 0.5104712041884817,
+      "lifetime_acc_24h": 0.5198952879581152
+    },
+    "OptionCommander": {
+      "total_predictions": 1850,
+      "lifetime_acc_1h": 0.49675675675675673,
+      "lifetime_acc_24h": 0.4756756756756757
+    },
+    "OptionNinja2023": {
+      "total_predictions": 1926,
+      "lifetime_acc_1h": 0.4968847352024922,
+      "lifetime_acc_24h": 0.4818276220145379
+    },
+    "OptionOracle": {
+      "total_predictions": 1969,
+      "lifetime_acc_1h": 0.5038090401218893,
+      "lifetime_acc_24h": 0.49669883189436265
+    },
+    "OptionSeeker": {
+      "total_predictions": 1945,
+      "lifetime_acc_1h": 0.502827763496144,
+      "lifetime_acc_24h": 0.4730077120822622
+    },
+    "OptionsFlowReader": {
+      "total_predictions": 1820,
+      "lifetime_acc_1h": 0.5010989010989011,
+      "lifetime_acc_24h": 0.4950549450549451
+    },
+    "OptionsGuru": {
+      "total_predictions": 1876,
+      "lifetime_acc_1h": 0.5,
+      "lifetime_acc_24h": 0.49093816631130066
+    },
+    "OptionsMaverick": {
+      "total_predictions": 1915,
+      "lifetime_acc_1h": 0.4934725848563969,
+      "lifetime_acc_24h": 0.4793733681462141
+    },
+    "OptionsOverseer": {
+      "total_predictions": 1851,
+      "lifetime_acc_1h": 0.5029713668287412,
+      "lifetime_acc_24h": 0.495407887628309
+    },
+    "OptionsSkewHunter": {
+      "total_predictions": 1794,
+      "lifetime_acc_1h": 0.48439241917502784,
+      "lifetime_acc_24h": 0.44537346711259757
+    },
+    "Opus liquidations": {
+      "total_predictions": 1570,
+      "lifetime_acc_1h": 0.49044585987261147,
+      "lifetime_acc_24h": 0.4949044585987261
+    },
+    "Oursoxo": {
+      "total_predictions": 1919,
+      "lifetime_acc_1h": 0.49973944762897343,
+      "lifetime_acc_24h": 0.49817613340281397
+    },
+    "PanicPilot": {
+      "total_predictions": 1924,
+      "lifetime_acc_1h": 0.498960498960499,
+      "lifetime_acc_24h": 0.4838877338877339
+    },
+    "PureFearGreed": {
+      "total_predictions": 1800,
+      "lifetime_acc_1h": 0.49777777777777776,
+      "lifetime_acc_24h": 0.465
+    },
+    "PureOI": {
+      "total_predictions": 1811,
+      "lifetime_acc_1h": 0.48094975151849806,
+      "lifetime_acc_24h": 0.4947542794036444
+    },
+    "PureOrderBook": {
+      "total_predictions": 1725,
+      "lifetime_acc_1h": 0.5055072463768115,
+      "lifetime_acc_24h": 0.49971014492753624
+    },
+    "PutCallContrarian": {
+      "total_predictions": 1820,
+      "lifetime_acc_1h": 0.5021978021978022,
+      "lifetime_acc_24h": 0.5082417582417582
+    },
+    "QuantumTrader": {
+      "total_predictions": 1969,
+      "lifetime_acc_1h": 0.47689182326053836,
+      "lifetime_acc_24h": 0.48704926358557643
+    },
+    "Random": {
+      "total_predictions": 1923,
+      "lifetime_acc_1h": 0.5070202808112324,
+      "lifetime_acc_24h": 0.4784191367654706
+    },
+    "Random 2": {
+      "total_predictions": 1894,
+      "lifetime_acc_1h": 0.4873284054910243,
+      "lifetime_acc_24h": 0.5
+    },
+    "Random 3": {
+      "total_predictions": 1815,
+      "lifetime_acc_1h": 0.5008264462809917,
+      "lifetime_acc_24h": 0.4931129476584022
+    },
+    "RapidScalper": {
+      "total_predictions": 1848,
+      "lifetime_acc_1h": 0.49296536796536794,
+      "lifetime_acc_24h": 0.48268398268398266
+    },
+    "RiskMitigator": {
+      "total_predictions": 1911,
+      "lifetime_acc_1h": 0.48770277341705914,
+      "lifetime_acc_24h": 0.4861329147043433
+    },
+    "RiskRewardGuru": {
+      "total_predictions": 1924,
+      "lifetime_acc_1h": 0.49480249480249483,
+      "lifetime_acc_24h": 0.5332640332640333
+    },
+    "Satoshi_Quant_G3": {
+      "total_predictions": 1801,
+      "lifetime_acc_1h": 0.5019433647973348,
+      "lifetime_acc_24h": 0.49194891726818435
+    },
+    "ScalpMaster": {
+      "total_predictions": 1925,
+      "lifetime_acc_1h": 0.49662337662337663,
+      "lifetime_acc_24h": 0.4877922077922078
+    },
+    "ScalpNinja": {
+      "total_predictions": 1941,
+      "lifetime_acc_1h": 0.49201442555383823,
+      "lifetime_acc_24h": 0.4750128799587841
+    },
+    "ScalperHawk": {
+      "total_predictions": 1950,
+      "lifetime_acc_1h": 0.4969230769230769,
+      "lifetime_acc_24h": 0.48256410256410254
+    },
+    "ScalperSage": {
+      "total_predictions": 1958,
+      "lifetime_acc_1h": 0.5,
+      "lifetime_acc_24h": 0.48723186925434114
+    },
+    "ScalpingGenius": {
+      "total_predictions": 1918,
+      "lifetime_acc_1h": 0.49635036496350365,
+      "lifetime_acc_24h": 0.4801876955161627
+    },
+    "ScalpingNinja": {
+      "total_predictions": 1971,
+      "lifetime_acc_1h": 0.5068493150684932,
+      "lifetime_acc_24h": 0.49670218163368846
+    },
+    "ScalpingSavant": {
+      "total_predictions": 1833,
+      "lifetime_acc_1h": 0.49318057828696127,
+      "lifetime_acc_24h": 0.4899072558647027
+    },
+    "SentimentEagle": {
+      "total_predictions": 1948,
+      "lifetime_acc_1h": 0.5035934291581109,
+      "lifetime_acc_24h": 0.5046201232032854
+    },
+    "SentimentSage": {
+      "total_predictions": 1942,
+      "lifetime_acc_1h": 0.504119464469619,
+      "lifetime_acc_24h": 0.47167868177136973
+    },
+    "SentimentSavant": {
+      "total_predictions": 1970,
+      "lifetime_acc_1h": 0.4842639593908629,
+      "lifetime_acc_24h": 0.5152284263959391
+    },
+    "SentimentSavvy": {
+      "total_predictions": 1944,
+      "lifetime_acc_1h": 0.49022633744855965,
+      "lifetime_acc_24h": 0.4886831275720165
+    },
+    "SentimentSentinel": {
+      "total_predictions": 1927,
+      "lifetime_acc_1h": 0.4722366372599896,
+      "lifetime_acc_24h": 0.4696419304618578
+    },
+    "ShortSleuth": {
+      "total_predictions": 1918,
+      "lifetime_acc_1h": 0.502606882168926,
+      "lifetime_acc_24h": 0.5281543274244004
+    },
+    "SpotSavant": {
+      "total_predictions": 1969,
+      "lifetime_acc_1h": 0.5220924327069578,
+      "lifetime_acc_24h": 0.4936515997968512
+    },
+    "StrategicSage": {
+      "total_predictions": 1942,
+      "lifetime_acc_1h": 0.48918640576725025,
+      "lifetime_acc_24h": 0.48094747682801237
+    },
+    "SwingStrategist": {
+      "total_predictions": 1950,
+      "lifetime_acc_1h": 0.517948717948718,
+      "lifetime_acc_24h": 0.4774358974358974
+    },
+    "TapeReader": {
+      "total_predictions": 1820,
+      "lifetime_acc_1h": 0.4956043956043956,
+      "lifetime_acc_24h": 0.49725274725274726
+    },
+    "Test": {
+      "total_predictions": 899,
+      "lifetime_acc_1h": 0.5016685205784205,
+      "lifetime_acc_24h": 0.4593993325917686
+    },
+    "TheCryptoPhil 1h": {
+      "total_predictions": 2125,
+      "lifetime_acc_1h": 0.5129411764705882,
+      "lifetime_acc_24h": 0.5138823529411765
+    },
+    "Trend Following on Pullback": {
+      "total_predictions": 1920,
+      "lifetime_acc_1h": 0.4953125,
+      "lifetime_acc_24h": 0.471875
+    },
+    "TrendBuster99": {
+      "total_predictions": 1950,
+      "lifetime_acc_1h": 0.5030769230769231,
+      "lifetime_acc_24h": 0.4846153846153846
+    },
+    "TrendGuard": {
+      "total_predictions": 1922,
+      "lifetime_acc_1h": 0.5020811654526535,
+      "lifetime_acc_24h": 0.5239334027055151
+    },
+    "TrendHopper": {
+      "total_predictions": 1853,
+      "lifetime_acc_1h": 0.4846195358877496,
+      "lifetime_acc_24h": 0.4749055585536967
+    },
+    "TrendSage": {
+      "total_predictions": 1970,
+      "lifetime_acc_1h": 0.4751269035532995,
+      "lifetime_acc_24h": 0.4751269035532995
+    },
+    "TrendSeeker": {
+      "total_predictions": 1969,
+      "lifetime_acc_1h": 0.5027932960893855,
+      "lifetime_acc_24h": 0.4662265109192483
+    },
+    "TrendSetter": {
+      "total_predictions": 1944,
+      "lifetime_acc_1h": 0.5061728395061729,
+      "lifetime_acc_24h": 0.4881687242798354
+    },
+    "TrendWatch": {
+      "total_predictions": 1801,
+      "lifetime_acc_1h": 0.49528039977790117,
+      "lifetime_acc_24h": 0.5002776235424764
+    },
+    "TrendWatcher": {
+      "total_predictions": 1918,
+      "lifetime_acc_1h": 0.5104275286757038,
+      "lifetime_acc_24h": 0.4932221063607925
+    },
+    "TrendyTrader": {
+      "total_predictions": 1971,
+      "lifetime_acc_1h": 0.5027904616945713,
+      "lifetime_acc_24h": 0.4703196347031963
+    },
+    "USOpenMomentum": {
+      "total_predictions": 1820,
+      "lifetime_acc_1h": 0.5016483516483516,
+      "lifetime_acc_24h": 0.5010989010989011
+    },
+    "VWAPReversion": {
+      "total_predictions": 1797,
+      "lifetime_acc_1h": 0.5063995548135782,
+      "lifetime_acc_24h": 0.5041736227045075
+    },
+    "VolExpansionTrader": {
+      "total_predictions": 1820,
+      "lifetime_acc_1h": 0.49065934065934064,
+      "lifetime_acc_24h": 0.4956043956043956
+    },
+    "VolatiKing": {
+      "total_predictions": 1924,
+      "lifetime_acc_1h": 0.498960498960499,
+      "lifetime_acc_24h": 0.5057172557172557
+    },
+    "VolatilityHawk": {
+      "total_predictions": 1949,
+      "lifetime_acc_1h": 0.49204720369420213,
+      "lifetime_acc_24h": 0.48948178553104155
+    },
+    "VolatilitySeeker": {
+      "total_predictions": 1971,
+      "lifetime_acc_1h": 0.47843734145104005,
+      "lifetime_acc_24h": 0.495687468290208
+    },
+    "VolatilityVulture": {
+      "total_predictions": 1971,
+      "lifetime_acc_1h": 0.5007610350076104,
+      "lifetime_acc_24h": 0.5017757483510908
+    },
+    "VolatilityWiz": {
+      "total_predictions": 1943,
+      "lifetime_acc_1h": 0.4915079773546063,
+      "lifetime_acc_24h": 0.4734945959855893
+    },
+    "VolumeBreakout": {
+      "total_predictions": 1708,
+      "lifetime_acc_1h": 0.4994145199063232,
+      "lifetime_acc_24h": 0.49765807962529274
+    },
+    "VolumeViper": {
+      "total_predictions": 1949,
+      "lifetime_acc_1h": 0.49512570548999485,
+      "lifetime_acc_24h": 0.4833247819394561
+    },
+    "WeekendFader": {
+      "total_predictions": 1821,
+      "lifetime_acc_1h": 0.5090609555189456,
+      "lifetime_acc_24h": 0.5183964854475562
+    },
+    "Yunbaozi 1h": {
+      "total_predictions": 2127,
+      "lifetime_acc_1h": 0.5138692994828397,
+      "lifetime_acc_24h": 0.5129290079924776
+    },
+    "https://bonus.bitget.com/5HA7LL": {
+      "total_predictions": 1944,
+      "lifetime_acc_1h": 0.5190329218106996,
+      "lifetime_acc_24h": 0.536522633744856
+    },
+    "huu": {
+      "total_predictions": 1892,
+      "lifetime_acc_1h": 0.5015856236786469,
+      "lifetime_acc_24h": 0.47780126849894294
+    },
+    "skynet": {
+      "total_predictions": 1937,
+      "lifetime_acc_1h": 0.500774393391843,
+      "lifetime_acc_24h": 0.47186370676303563
+    }
+  },
+  "bad_agents": [
+    "00z7 1h",
+    "Airfeemc 1h",
+    "BaBaSaM",
+    "Beta Fusion Superstar",
+    "BruninhoPposite",
+    "BullishNinja",
+    "FearlessTrader",
+    "FundingMomentum",
+    "GreedChallenger",
+    "MarketMaven",
+    "MarketMaverick",
+    "MarketWizardX",
+    "MeanReversionMaster",
+    "MeanReverter",
+    "MeanRevertor",
+    "My Math Specialist",
+    "OptionSeeker",
+    "OptionsSkewHunter",
+    "PureFearGreed",
+    "SentimentSage",
+    "SentimentSentinel",
+    "Test",
+    "Trend Following on Pullback",
+    "TrendHopper",
+    "TrendSeeker",
+    "TrendyTrader",
+    "VolatilityWiz",
+    "skynet"
+  ]
+}

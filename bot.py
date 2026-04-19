@@ -38,8 +38,10 @@ from myquant_client import (
 from ta_engine import fetch_binance_candles, compute_indicators, compute_ta_signals, get_candle_features
 from signal_engine import MLModel, HourFilter, compute_signal
 from performance_tracker import PerformanceTracker
+import feature_store
 
 BOT_STATE_PATH = os.path.join(os.path.dirname(__file__), "bot_state.json")
+RETRAIN_SCRIPT = os.path.join(os.path.dirname(__file__), "retrain.py")
 
 
 def log(msg):
@@ -254,6 +256,50 @@ def check_position_expiry(hl: HyperliquidClient, tracker: PerformanceTracker) ->
     return False
 
 
+def maybe_retrain_model(bot_state: dict, ml_model: MLModel, agent_tracker) -> None:
+    """Spawn retrain.py once per day at config.MODEL_RETRAIN_HOUR.
+    The subprocess rewrites model_v14.pkl + bad_agents.json on disk, which
+    both the ML model and agent tracker reload on next use."""
+    if not config.ENABLE_INTERNAL_RETRAIN:
+        return
+    if not os.path.exists(RETRAIN_SCRIPT):
+        return
+
+    now = datetime.now(timezone.utc)
+    if now.hour != config.MODEL_RETRAIN_HOUR:
+        return
+
+    today_key = now.strftime("%Y-%m-%d")
+    if bot_state.get("last_retrain_day") == today_key:
+        return
+
+    log(f"  [RETRAIN] Triggering daily retrain ({today_key}, hour {now.hour}:00 UTC)...")
+    try:
+        import subprocess
+        result = subprocess.run(
+            [sys.executable, RETRAIN_SCRIPT],
+            cwd=os.path.dirname(__file__),
+            capture_output=True,
+            text=True,
+            timeout=1200,
+        )
+        bot_state["last_retrain_day"] = today_key
+        if result.returncode == 0:
+            log("  [RETRAIN] Succeeded — reloading model & agent stats")
+            tail = (result.stdout or "").strip().splitlines()[-10:]
+            for line in tail:
+                log(f"    {line}")
+            ml_model._load()
+            agent_tracker._load_precomputed()
+        else:
+            log(f"  [RETRAIN] FAILED (exit {result.returncode})")
+            err_tail = (result.stderr or "").strip().splitlines()[-15:]
+            for line in err_tail:
+                log(f"    {line}")
+    except Exception as e:
+        log(f"  [RETRAIN] Error spawning: {e}")
+
+
 def check_signal_reversal(
     hl: HyperliquidClient,
     tracker: PerformanceTracker,
@@ -365,6 +411,7 @@ def main():
     while True:
         try:
             tracker.check_daily_reset()
+            maybe_retrain_model(bot_state, ml_model, agent_tracker)
 
             # ── Wait for next hour boundary ──────────────────────
             now = datetime.now(timezone.utc)
@@ -441,6 +488,15 @@ def main():
             log(f"  BTC: ${btc_price:,.0f} | ATR: {atr_pct:.2f}% | "
                 f"TA: {ta_result['ta_long']}L/{ta_result['ta_short']}S "
                 f"(net={ta_result['ta_net_signal']:+.3f})")
+
+            # Persist this hour's snapshot so retrain.py can refresh the model
+            feature_store.append_hour(
+                hour_ts=current_hour_str,
+                btc_close=btc_price,
+                agents=agents or [],
+                candle_features=candle_features,
+                ta_result=ta_result,
+            )
 
             # ── ML model status ────────────────────────────────────
             if ml_model.model is not None:

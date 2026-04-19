@@ -1,0 +1,24 @@
+# Railway cron-service template for daily retrain.
+#
+# Use this ONLY if you prefer a separate Railway service over the bot's
+# built-in daily retrain (ENABLE_INTERNAL_RETRAIN=true, the default).
+#
+# Setup:
+#   1. On Railway, create a second service in the same project, pointing at
+#      this same repo. Copy this file's contents as its railway.toml, and set
+#      cronSchedule to your preferred UTC cron expression.
+#   2. Attach the SAME persistent volume as the bot service at /app so both
+#      services share model_v14.pkl, bad_agents.json, and feature_store.jsonl.
+#   3. Set ENABLE_INTERNAL_RETRAIN=false on the bot service so retraining
+#      only happens from this cron.
+#
+# Cron: "30 2 * * *"  = every day at 02:30 UTC (after midnight-UTC settles)
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "./Dockerfile"
+
+[deploy]
+startCommand = "python retrain.py"
+cronSchedule = "30 2 * * *"
+restartPolicyType = "NEVER"
