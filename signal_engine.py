@@ -322,6 +322,11 @@ def compute_signal(
     strength = abs(conviction)
     direction = 1 if conviction > 0 else -1
 
+    # Always log the component breakdown so we can verify every signal
+    # source is contributing, even on hours where no trade is taken.
+    log(f"  [SIG] Conviction={conviction:+.3f} "
+        f"(ML={ml_sig:+.3f} CT={counter_sig:+.1f} TA={ta_sig:+.3f} CS={consensus_sig:+.3f})")
+
     # Hour filter
     if not hour_filter.is_allowed(current_hour):
         log(f"  [SIG] Hour {current_hour} filtered out (bad hour)")
@@ -336,8 +341,7 @@ def compute_signal(
     sl_pct = max(config.SL_MIN_PCT, min(config.SL_MAX_PCT, atr_pct * config.SL_MULTIPLIER))
 
     log(f"  [SIG] SIGNAL: {'LONG' if direction == 1 else 'SHORT'} "
-        f"conviction={conviction:+.3f} "
-        f"(ML={ml_sig:+.3f} CT={counter_sig:+.1f} TA={ta_sig:+.3f} CS={consensus_sig:+.3f})")
+        f"conviction={conviction:+.3f}")
 
     return {
         "direction": "LONG" if direction == 1 else "SHORT",
